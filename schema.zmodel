@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BusinessCategories {
+  SOLE
+  INDIVIDUAL
+  COMPANY
+}
+
+enum BankAccountTypes {
+  SAVING
+  CURRENT
+}
+
+enum RoleScope {
+  GLOBAL
+  ORGANIZATION
+}
+
+enum Roles {
+  SUPERADMIN
+  ADMIN
+  EXECUTIVE
+  OTHERS
+}
+
+abstract model BaseModel {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Organization {
+  id                             String              @id @default(uuid())
+
+  //business details
+  company_name                   String?
+  brand_name                     String?
+  business_category              BusinessCategories?
+  business_subcategory           String?
+  company_logo                   String?
+
+  //bank details
+  bank_account_number            String?
+  bank_account_name              String?
+  bank_name                      String?
+  bank_ifsc_code                 String?
+  bank_account_type              BankAccountTypes?
+
+  //billing details
+  billing_address                String?
+  billing_address_landmark       String?
+  billing_address_pincode        String?
+  billing_address_city           String?
+  billing_address_state          String?
+  billing_address_contact_number String?
+
+  //invoice preference
+  invoice_prefix                 String?
+  invoice_series_starting_from   String?
+  invoice_cin_number             String?
+  invoice_hide_buyer_contact     Boolean             @default(true)
+  invoice_signature              String?
+
+  users                          User[]
+}
+
+model User {
+  id           String            @id @default(uuid())
+  email        String?           @unique
+  first_name   String?
+  last_name    String?
+  phone_number String?           @unique
+  is_active    Boolean           @default(true)
+  avatar       String?
+  password     String            @omit @password
+  role         Roles
+  scope        RoleScope
+
+  org_id       String
+  org          Organization      @relation(fields: [org_id], references: [id])
+
+  permissions  UserPermissions[]
+
+  created_at   DateTime          @default(now())
+  updated_at   DateTime          @updatedAt
+}
+
+model Permissions {
+  id          String            @id @default(uuid())
+  tag         String
+  description String?
+
+  users       UserPermissions[]
+}
+
+model UserPermissions {
+  id            String      @id @default(uuid())
+
+  user_id       String
+  user          User        @relation(fields: [user_id], references: [id])
+
+  permission_id String
+  permission    Permissions @relation(fields: [permission_id], references: [id])
+}
+
