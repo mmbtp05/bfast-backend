@@ -6,7 +6,7 @@ import { ErrorCode } from "../../../types/error";
 import { checkPassword, hashPassword } from "../../../utils/passwordUtility";
 import jwt from "jsonwebtoken";
 import { CustomRequest } from "../../../types/customRequest";
-import uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export const login = async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { type, phone_number, otp, session_uuid, email, password } = req.body as AuthLoginBody;
@@ -66,7 +66,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
             {
                 expiresIn: '24h',
                 issuer: "backend.bfast",
-                jwtid: uuid.v4()
+                jwtid: uuidv4()
             }
         )
 
@@ -157,7 +157,8 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
             process.env.TOKEN_KEY ?? "",
             {
                 expiresIn: '24h',
-                issuer: "backend.bfast"
+                issuer: "backend.bfast",
+                jwtid: uuidv4()
             }
         )
 
