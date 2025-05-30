@@ -1,13 +1,15 @@
 import prisma from "../../../config/db";
-import { NextFunction, Request, Response } from "express";
-import { AuthLoginBody } from "../../../types/auth";
+import { NextFunction, Response } from "express";
+import { AuthLoginBody, AuthRegisterBody } from "../../../types/auth";
 import { AppError } from "../../../utils/customErrors";
 import { ErrorCode } from "../../../types/error";
-import { enhance } from "@zenstackhq/runtime";
-import { checkPassword } from "../../../utils/passwordUtility";
+import { checkPassword, hashPassword } from "../../../utils/passwordUtility";
+import jwt from "jsonwebtoken";
+import { CustomRequest } from "../../../types/customRequest";
+import uuid from 'uuid';
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
-    const { type, phone_number, otp, email, password } = req.body as AuthLoginBody;
+export const login = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { type, phone_number, otp, session_uuid, email, password } = req.body as AuthLoginBody;
 
     try {
         let user;
@@ -17,7 +19,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
                 throw new AppError("Email and password are required for email authentication.", ErrorCode.INVALID_PAYLOAD);
             }
 
-            const user = await prisma.user.findUnique({
+            user = await prisma.user.findUnique({
                 where: { email },
                 include: { permissions: { include: { permission: { select: { tag: true } } } } }
             });
@@ -30,8 +32,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
                 throw new AppError("Invalid username or password.", ErrorCode.USER_NOT_FOUND);
             }
         } else if (type === "phone_number") {
-            if (!phone_number || !otp) {
-                throw new AppError("Phone number and OTP are required for phone number authentication.", ErrorCode.INVALID_PAYLOAD);
+            if (!phone_number) {
+                throw new AppError("Phone number is required for authentication.", ErrorCode.INVALID_PAYLOAD);
             }
 
             user = await prisma.user.findUnique({
@@ -44,23 +46,55 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
             }
 
             if (!otp) {
-                throw new AppError("Invalid OTP!", ErrorCode.INVALID_PAYLOAD)
+                return res.status(200).json({ success: true, status_code: 200, message: "Otp Send Successfully!", data: { session_uuid: "9ac065e5-536c-4ac5-a94d-c164fe7485cd" } })
+            }
+
+            if (!session_uuid || otp !== "123456") {
+                throw new AppError("Invalid OTP!", ErrorCode.INVALID_OTP)
             }
         }
 
+        const userPermissions = user?.permissions?.map(per => per?.permission?.tag)
 
+        const access_token = jwt.sign(
+            {
+                permissions: userPermissions,
+                user_id: user?.id,
+                org_id: user?.org_id
+            },
+            process.env.TOKEN_KEY ?? "",
+            {
+                expiresIn: '24h',
+                issuer: "backend.bfast",
+                jwtid: uuid.v4()
+            }
+        )
 
-
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: {
+                id: user?.id,
+                org_id: user?.org_id,
+                role: user?.role,
+                user_permissions: userPermissions,
+                access_token
+            }
+        })
     } catch (error) {
         next(error);
     }
 }
 
 
-export const register = async (req: Request, res: Response, next: NextFunction) => {
-    const { first_name, last_name, company_name, phone_number, email, password, parcels_per_month } = req.body
+export const register = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { first_name, last_name, company_name, phone_number, email, password, parcels_per_month, otp, session_uuid } = req.body as AuthRegisterBody;
 
     try {
+        if (!first_name || !last_name || !company_name || !phone_number || !email || !password || !parcels_per_month) {
+            throw new AppError("Please mention all information.", ErrorCode.INVALID_PAYLOAD)
+        }
+
         const checkUser = await prisma.user.findFirst({
             where: {
                 OR: [
@@ -74,22 +108,33 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
             throw new AppError("User already exist with this email or phone.", ErrorCode.USER_ALREADY_EXISTS)
         }
 
-        const createOrg = await prisma.organization.create({ data: { company_name } })
+        if (!otp) {
+            return res.status(200).json({ success: true, status_code: 200, message: "Otp Send Successfully!", data: { session_uuid: "9ac065e5-536c-4ac5-a94d-c164fe7485cd" } })
+        }
+
+        if (session_uuid && otp !== "123456") {
+            throw new AppError("Invalid Otp", ErrorCode.INVALID_OTP)
+        }
+
+        const createOrg = await prisma.organization.create({ data: { company_name, parcels_per_month } })
+
+        const hash_pass = await hashPassword(password)
 
         const createUser = await prisma.user.create({
             data: {
                 org_id: createOrg.id,
                 role: "ADMIN",
                 scope: "ORGANIZATION",
-                password,
+                password: hash_pass,
                 first_name,
                 last_name,
                 phone_number,
+                email
             }
         })
 
         const allPermissions = await prisma.permissions.findMany({
-            select: { id: true }
+            select: { id: true, tag: true }
         });
 
         const permissionMappings = allPermissions.map(p => ({
@@ -101,10 +146,53 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
             data: permissionMappings
         });
 
-        return res.status(200).json({ success: true, status_code: 200, data: {} })
+        const userPermissions = allPermissions.map(per => per.tag)
+
+        const access_token = jwt.sign(
+            {
+                permissions: userPermissions,
+                user_id: createUser?.id,
+                org_id: createOrg?.id
+            },
+            process.env.TOKEN_KEY ?? "",
+            {
+                expiresIn: '24h',
+                issuer: "backend.bfast"
+            }
+        )
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: {
+                id: createUser?.id,
+                org_id: createOrg?.id,
+                role: createUser?.role,
+                user_permissions: userPermissions,
+                access_token
+            }
+        });
     } catch (error) {
         next(error)
     }
 }
 
-export const 
+export const logout = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        await prisma.jWTBlacklist.create({
+            data: {
+                token: req.token ?? "",
+                user_id: req.user_id ?? "",
+                jti: req.jti ?? ""
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            message: "Logout Successfully!"
+        })
+    } catch (error) {
+        next(error)
+    }
+}

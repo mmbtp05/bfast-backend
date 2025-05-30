@@ -52,6 +52,7 @@ model Organization {
   business_category              BusinessCategories?
   business_subcategory           String?
   company_logo                   String?
+  parcels_per_month              String?
 
   //bank details
   bank_account_number            String?
@@ -79,24 +80,35 @@ model Organization {
 }
 
 model User {
-  id           String            @id @default(uuid())
-  email        String?           @unique
-  first_name   String?
-  last_name    String?
-  phone_number String?           @unique
-  is_active    Boolean           @default(true)
-  avatar       String?
-  password     String            @omit @password
-  role         Roles
-  scope        RoleScope
+  id             String            @id @default(uuid())
+  email          String?           @unique
+  first_name     String?
+  last_name      String?
+  phone_number   String?           @unique
+  is_active      Boolean           @default(true)
+  avatar         String?
+  password       String            @omit @password
+  role           Roles
+  scope          RoleScope
+  email_verified Boolean           @default(false)
 
-  org_id       String
-  org          Organization      @relation(fields: [org_id], references: [id])
+  org_id         String
+  org            Organization      @relation(fields: [org_id], references: [id])
 
-  permissions  UserPermissions[]
+  permissions    UserPermissions[]
+  jwt_blacklist  JWTBlacklist[]
 
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
+  created_at     DateTime          @default(now())
+  updated_at     DateTime          @updatedAt
+}
+
+model JWTBlacklist {
+  id      String @id @default(uuid())
+  token   String
+  jti     String @unique
+
+  user_id String
+  user    User   @relation(fields: [user_id], references: [id])
 }
 
 model Permissions {

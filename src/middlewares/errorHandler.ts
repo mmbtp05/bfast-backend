@@ -1,21 +1,14 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AppError } from '../utils/customErrors';
 import { ErrorCode } from '../types/error';
 import { Prisma } from '../../generated/prisma';
 import logger from '../utils/logger';
-
-
-interface ErrorResponse {
-    success: Boolean;
-    status_code: number;
-    error_code: number;
-    message: string;
-    metadata?: any;
-}
+import { CustomRequest } from '../types/customRequest';
+import { ErrorResponse } from '../types/error';
 
 export const errorHandler = (
     error: AppError | Prisma.PrismaClientKnownRequestError,
-    req: Request,
+    req: CustomRequest,
     res: Response,
     next: NextFunction
 ) => {
@@ -77,7 +70,7 @@ export const errorHandler = (
         }
     }
 
-    return res.status(errorResponse.status_code).json(errorResponse);
+    return res.status(errorResponse.status_code).json(errorResponse) as any;
 };
 
 // Helper function to handle Prisma errors with logging

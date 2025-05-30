@@ -21,6 +21,7 @@ export enum ErrorCode {
     SESSION_EXPIRED = 40106,
     INVALID_API_KEY = 40107,
     MFA_REQUIRED = 40108,
+    INVALID_OTP = 40109,
 
     // 403 Forbidden (40300-40399)
     INSUFFICIENT_PERMISSIONS = 40301,
@@ -81,8 +82,9 @@ export enum ErrorCode {
 }
 
 export interface ErrorResponse {
+    success: Boolean;
     status_code: number;
-    error_code: ErrorCode;
+    error_code: number;
     message: string;
     metadata?: any;
 }
