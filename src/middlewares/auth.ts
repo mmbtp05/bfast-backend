@@ -26,6 +26,7 @@ export const isAuthenticate = async (req: CustomRequest, res: Response, next: Ne
         req.permissions = decoded.permissions
         req.org_id = decoded.org_id
         req.token = token[1]
+        req.jti = decoded.jti
 
         const isBlacklisted = await prisma.jWTBlacklist.findUnique({
             where: {

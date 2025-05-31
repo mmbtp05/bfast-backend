@@ -18,3 +18,12 @@ export interface AuthRegisterBody {
     otp?: string | null;
     session_uuid?: string | null;
 }
+
+export interface AddUserBody {
+    first_name: string;
+    last_name: string;
+    email: string;
+    permissions: string[];
+    role: string;
+    buyer_detail_access: boolean;
+}

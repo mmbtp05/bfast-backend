@@ -37,18 +37,13 @@ enum Roles {
 }
 
 model Organization {
-  id                             String              @id() @default(uuid())
+  id                             String                  @id() @default(uuid())
   company_name                   String?
   brand_name                     String?
   business_category              BusinessCategories?
   business_subcategory           String?
   company_logo                   String?
   parcels_per_month              String?
-  bank_account_number            String?
-  bank_account_name              String?
-  bank_name                      String?
-  bank_ifsc_code                 String?
-  bank_account_type              BankAccountTypes?
   billing_address                String?
   billing_address_landmark       String?
   billing_address_pincode        String?
@@ -58,29 +53,48 @@ model Organization {
   invoice_prefix                 String?
   invoice_series_starting_from   String?
   invoice_cin_number             String?
-  invoice_hide_buyer_contact     Boolean             @default(true)
+  invoice_hide_buyer_contact     Boolean                 @default(true)
   invoice_signature              String?
+  remittance_info                OrganizationRemittance?
   users                          User[]
 }
 
+model OrganizationRemittance {
+  id                String           @id() @default(uuid())
+  account_number    String
+  account_type      BankAccountTypes
+  beneficiary_name  String
+  ifsc_code         String
+  bank_name         String
+  branch_name       String
+  remittance_period Int              @default(14)
+  org_id            String           @unique()
+  org               Organization     @relation(fields: [org_id], references: [id])
+}
+
+model Courier {
+  id String @id() @default(uuid())
+}
+
 model User {
-  id             String            @id() @default(uuid())
-  email          String?           @unique()
-  first_name     String?
-  last_name      String?
-  phone_number   String?           @unique()
-  is_active      Boolean           @default(true)
-  avatar         String?
-  password       String
-  role           Roles
-  scope          RoleScope
-  email_verified Boolean           @default(false)
-  org_id         String
-  org            Organization      @relation(fields: [org_id], references: [id])
-  permissions    UserPermissions[]
-  jwt_blacklist  JWTBlacklist[]
-  created_at     DateTime          @default(now())
-  updated_at     DateTime          @updatedAt()
+  id                  String            @id() @default(uuid())
+  email               String?           @unique()
+  first_name          String?
+  last_name           String?
+  phone_number        String?           @unique()
+  is_active           Boolean           @default(true)
+  avatar              String?
+  password            String
+  role                Roles
+  scope               RoleScope
+  email_verified      Boolean           @default(false)
+  buyer_detail_access Boolean           @default(true)
+  org_id              String
+  org                 Organization      @relation(fields: [org_id], references: [id])
+  permissions         UserPermissions[]
+  jwt_blacklist       JWTBlacklist[]
+  created_at          DateTime          @default(now())
+  updated_at          DateTime          @updatedAt()
 }
 
 model JWTBlacklist {

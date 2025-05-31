@@ -1,6 +1,6 @@
 import prisma from "../../../config/db";
 import { NextFunction, Response } from "express";
-import { AuthLoginBody, AuthRegisterBody } from "../../../types/auth";
+import { AddUserBody, AuthLoginBody, AuthRegisterBody } from "../../../types/auth";
 import { AppError } from "../../../utils/customErrors";
 import { ErrorCode } from "../../../types/error";
 import { checkPassword, hashPassword } from "../../../utils/passwordUtility";
@@ -31,6 +31,10 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
             if (! await checkPassword(password, user.password)) {
                 throw new AppError("Invalid username or password.", ErrorCode.USER_NOT_FOUND);
             }
+
+            if (!user.is_active) {
+                throw new AppError("User is not active.", ErrorCode.ACCOUNT_SUSPENDED);
+            }
         } else if (type === "phone_number") {
             if (!phone_number) {
                 throw new AppError("Phone number is required for authentication.", ErrorCode.INVALID_PAYLOAD);
@@ -52,9 +56,15 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
             if (!session_uuid || otp !== "123456") {
                 throw new AppError("Invalid OTP!", ErrorCode.INVALID_OTP)
             }
+
+            if (!user.is_active) {
+                throw new AppError("User is not active.", ErrorCode.ACCOUNT_SUSPENDED);
+            }
         }
 
         const userPermissions = user?.permissions?.map(per => per?.permission?.tag)
+
+        const jwtid = uuidv4();
 
         const access_token = jwt.sign(
             {
@@ -66,7 +76,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
             {
                 expiresIn: '24h',
                 issuer: "backend.bfast",
-                jwtid: uuidv4()
+                jwtid
             }
         )
 
@@ -148,6 +158,8 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
 
         const userPermissions = allPermissions.map(per => per.tag)
 
+        const jwtid = uuidv4();
+
         const access_token = jwt.sign(
             {
                 permissions: userPermissions,
@@ -158,7 +170,7 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
             {
                 expiresIn: '24h',
                 issuer: "backend.bfast",
-                jwtid: uuidv4()
+                jwtid
             }
         )
 
@@ -193,6 +205,45 @@ export const logout = async (req: CustomRequest, res: Response, next: NextFuncti
             status_code: 200,
             message: "Logout Successfully!"
         })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const addUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { first_name, last_name, email, role, permissions, buyer_detail_access } = req.body as AddUserBody
+
+    try {
+        await prisma.user.create({
+            data: {
+                first_name,
+                last_name,
+                permissions: {
+                    createMany: {
+                        data: permissions?.map(per => ({ permission_id: per }))
+                    }
+                },
+                email,
+                role,
+                password: "nk",
+                org_id: req.org_id ?? "",
+                scope: "ORGANIZATION",
+                buyer_detail_access,
+                is_active: true
+            }
+        })
+
+        return res.status(200).json({ success: true, success_code: 200, message: 'User added successfully!' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const changePassword = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { old_password, new_password } = req.body
+
+    try {
+
     } catch (error) {
         next(error)
     }
