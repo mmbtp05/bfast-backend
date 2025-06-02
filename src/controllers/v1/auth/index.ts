@@ -126,7 +126,7 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
             throw new AppError("Invalid Otp", ErrorCode.INVALID_OTP)
         }
 
-        const createOrg = await prisma.organization.create({ data: { company_name, parcels_per_month } })
+        const createOrg = await prisma.organization.create({ data: { company_name, parcels_per_month, company_email: email } })
 
         const hash_pass = await hashPassword(password)
 
@@ -139,7 +139,8 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
                 first_name,
                 last_name,
                 phone_number,
-                email
+                email,
+                buyer_detail_access: true
             }
         })
 
@@ -214,6 +215,16 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
     const { first_name, last_name, email, role, permissions, buyer_detail_access } = req.body as AddUserBody
 
     try {
+        if (!first_name || !last_name || !email || !role || !permissions || !buyer_detail_access) {
+            throw new AppError("Please mention all the fields", ErrorCode.INVALID_PAYLOAD)
+        }
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let randomPass = '';
+        for (let i = 0; i < 10; i++) {
+            randomPass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+
         await prisma.user.create({
             data: {
                 first_name,
@@ -225,7 +236,7 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
                 },
                 email,
                 role,
-                password: "nk",
+                password: randomPass,
                 org_id: req.org_id ?? "",
                 scope: "ORGANIZATION",
                 buyer_detail_access,
@@ -240,10 +251,42 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
 }
 
 export const changePassword = async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { old_password, new_password } = req.body
+    const { old_password, new_password, confirm_password } = req.body
 
     try {
+        if (!old_password || !confirm_password || !new_password) {
+            throw new AppError("Please mention all the fields.", ErrorCode.INVALID_PAYLOAD)
+        }
 
+        if (new_password !== confirm_password) {
+            throw new AppError("New and confirm new password does not match.", ErrorCode.INVALID_PAYLOAD)
+        }
+
+        const checkOldPassword = await prisma.user.findUnique({
+            where: {
+                id: req.user_id
+            },
+            select: {
+                password: true
+            }
+        })
+
+        if (! await checkPassword(old_password, checkOldPassword?.password ?? "")) {
+            throw new AppError("Incorrect Old Password.", ErrorCode.USER_NOT_FOUND)
+        }
+
+        const hash_pass = await hashPassword(new_password)
+
+        await prisma.user.update({
+            where: {
+                id: req.user_id
+            },
+            data: {
+                password: hash_pass
+            }
+        })
+
+        return res.status(200).json({ success: true, status_code: 200, message: 'Password change successfully!' });
     } catch (error) {
         next(error)
     }

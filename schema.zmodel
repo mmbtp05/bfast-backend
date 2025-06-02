@@ -49,10 +49,10 @@ model Organization {
   //business details
   company_name                   String?
   brand_name                     String?
-  business_category              BusinessCategories?
-  business_subcategory           String?
   company_logo                   String?
+  compant_website                String?
   parcels_per_month              String?
+  company_email                  String?
 
   //billing details
   billing_address                String?
@@ -70,6 +70,8 @@ model Organization {
   invoice_signature              String?
 
   //kyc
+  business_category              BusinessCategories?
+  business_subcategory           String?
 
   remittance_info                OrganizationRemittance?
   users                          User[]
@@ -89,8 +91,10 @@ model OrganizationRemittance {
   org               Organization     @relation(fields: [org_id], references: [id])
 }
 
-model Courier {
-  id String @id @default(uuid())
+model Couriers {
+  id   String  @id @default(uuid())
+  name String
+  logo String?
 }
 
 model User {
@@ -105,7 +109,7 @@ model User {
   role                Roles
   scope               RoleScope
   email_verified      Boolean           @default(false)
-  buyer_detail_access Boolean           @default(true)
+  buyer_detail_access Boolean           @default(false)
 
   org_id              String
   org                 Organization      @relation(fields: [org_id], references: [id])
