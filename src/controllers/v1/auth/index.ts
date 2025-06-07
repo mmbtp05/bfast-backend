@@ -215,7 +215,7 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
     const { first_name, last_name, email, role, permissions, buyer_detail_access } = req.body as AddUserBody
 
     try {
-        if (!first_name || !last_name || !email || !role || !permissions || !buyer_detail_access) {
+        if (!first_name || !last_name || !email || !role || !permissions || buyer_detail_access === undefined) {
             throw new AppError("Please mention all the fields", ErrorCode.INVALID_PAYLOAD)
         }
 
@@ -224,6 +224,8 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
         for (let i = 0; i < 10; i++) {
             randomPass += chars.charAt(Math.floor(Math.random() * chars.length));
         }
+
+        const hash_pass = await hashPassword("test@123")
 
         await prisma.user.create({
             data: {
@@ -236,7 +238,7 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
                 },
                 email,
                 role,
-                password: randomPass,
+                password: hash_pass,
                 org_id: req.org_id ?? "",
                 scope: "ORGANIZATION",
                 buyer_detail_access,
@@ -245,6 +247,45 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
         })
 
         return res.status(200).json({ success: true, success_code: 200, message: 'User added successfully!' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const users = await prisma.$queryRaw`
+            SELECT 
+            u.id,
+            u.first_name,
+            u.last_name,
+            u.role,
+            u.email,
+            u.buyer_detail_access,
+            u.is_active,
+            COALESCE(json_agg(p.tag) FILTER (WHERE p.id IS NOT NULL), '[]') AS permissions
+            FROM "User" u
+            LEFT JOIN "UserPermissions" up ON u.id = up.user_id
+            LEFT JOIN "Permissions" p ON up.permission_id = p.id
+            WHERE u.org_id = ${req.org_id} AND u.role != 'ADMIN'
+            GROUP BY u.id
+
+        `
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: users
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getPermissions = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const permissions = await prisma.permissions.findMany()
+        return res.status(200).send({ success: true, success_code: 200, data: permissions })
     } catch (error) {
         next(error)
     }

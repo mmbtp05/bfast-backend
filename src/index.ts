@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config.js';
 import authRouter from "./routes/v1/auth"
 import { errorHandler } from './middlewares/errorHandler';
+import prisma from './config/db';
 
 const app = express();
 const PORT = process.env.PORT || 3000;

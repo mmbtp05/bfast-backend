@@ -7,6 +7,7 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
+  previewFeatures = ["strictUndefinedChecks"]
 }
 
 datasource db {
@@ -72,6 +73,9 @@ model Organization {
   //kyc
   business_category              BusinessCategories?
   business_subcategory           String?
+
+  //pickup address
+  
 
   remittance_info                OrganizationRemittance?
   users                          User[]

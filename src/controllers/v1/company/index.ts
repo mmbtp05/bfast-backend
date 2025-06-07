@@ -1,10 +1,7 @@
 import prisma from "../../../config/db";
 import { NextFunction, Response } from "express";
-import { AddUserBody, AuthLoginBody, AuthRegisterBody } from "../../../types/auth";
-import { AppError } from "../../../utils/customErrors";
-import { ErrorCode } from "../../../types/error";
 import { CustomRequest } from "../../../types/customRequest";
-import { v4 as uuidv4 } from 'uuid';
+import { Prisma } from "../../../../generated/prisma";
 
 export const getCompanyDetails = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
@@ -34,35 +31,16 @@ export const getCompanyDetails = async (req: CustomRequest, res: Response, next:
 export const updateCompanyDetails = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
         const { company_name, brand_name, company_email } = req.body;
-        const updateData: any = {};
-        
-        if (company_name !== undefined) updateData.company_name = company_name;
-        if (brand_name !== undefined) updateData.brand_name = brand_name;
-        if (company_email !== undefined) updateData.company_email = company_email;
-
-        // Check if there's at least one field to update
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({
-                success: false,
-                status_code: 400,
-                message: "No fields provided for update"
-            });
-        }
-
-        // Optional: Add validation for email format
-        if (company_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(company_email)) {
-            return res.status(400).json({
-                success: false,
-                status_code: 400,
-                message: "Invalid email format"
-            });
-        }
 
         const updatedDetails = await prisma.organization.update({
             where: {
                 id: req.org_id
             },
-            data: updateData,
+            data: {
+                company_name: company_name ?? Prisma.skip,
+                brand_name: brand_name ?? Prisma.skip,
+                company_email: company_email ?? Prisma.skip
+            },
             select: {
                 id: true,
                 company_name: true,
@@ -83,4 +61,148 @@ export const updateCompanyDetails = async (req: CustomRequest, res: Response, ne
         next(error);
     }
 }
+
+export const getBillingAddress = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const billingAddress = await prisma.organization.findUnique({
+            where: {
+                id: req.org_id
+            },
+            select: {
+                id: true,
+                billing_address: true,
+                billing_address_landmark: true,
+                billing_address_pincode: true,
+                billing_address_city: true,
+                billing_address_state: true,
+                billing_address_contact_number: true
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: billingAddress
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const updateBillingAddress = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const {
+            billing_address,
+            billing_address_landmark,
+            billing_address_pincode,
+            billing_address_city,
+            billing_address_state,
+            billing_address_contact_number
+        } = req.body;
+
+
+        const updatedBillingAddress = await prisma.organization.update({
+            where: {
+                id: req.org_id
+            },
+            data: {
+                billing_address: billing_address ?? Prisma.skip,
+                billing_address_landmark: billing_address_landmark ?? Prisma.skip,
+                billing_address_pincode: billing_address_pincode ?? Prisma.skip,
+                billing_address_city: billing_address_city ?? Prisma.skip,
+                billing_address_state: billing_address_state ?? Prisma.skip,
+                billing_address_contact_number: billing_address_contact_number ?? Prisma.skip
+            },
+            select: {
+                id: true,
+                billing_address: true,
+                billing_address_landmark: true,
+                billing_address_pincode: true,
+                billing_address_city: true,
+                billing_address_state: true,
+                billing_address_contact_number: true
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: updatedBillingAddress
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const getInvoiceSettings = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const invoiceSettings = await prisma.organization.findUnique({
+            where: {
+                id: req.org_id
+            },
+            select: {
+                id: true,
+                invoice_prefix: true,
+                invoice_series_starting_from: true,
+                invoice_cin_number: true,
+                invoice_hide_buyer_contact: true,
+                invoice_signature: true
+            }
+        })
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: invoiceSettings
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const updateInvoiceSettings = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const {
+            invoice_prefix,
+            invoice_series_starting_from,
+            invoice_cin_number,
+            invoice_hide_buyer_contact,
+            invoice_signature
+        } = req.body;
+
+        const updatedInvoiceSettings = await prisma.organization.update({
+            where: {
+                id: req.org_id
+            },
+            data: {
+                invoice_prefix: invoice_prefix ?? Prisma.skip,
+                invoice_series_starting_from: invoice_series_starting_from ?? Prisma.skip,
+                invoice_cin_number: invoice_cin_number ?? Prisma.skip,
+                invoice_hide_buyer_contact: invoice_hide_buyer_contact ?? Prisma.skip,
+                invoice_signature: invoice_signature ?? Prisma.skip
+            },
+            select: {
+                id: true,
+                invoice_prefix: true,
+                invoice_series_starting_from: true,
+                invoice_cin_number: true,
+                invoice_hide_buyer_contact: true,
+                invoice_signature: true
+            }
+        });
+
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            message: "Invoice settings updated successfully",
+            data: updatedInvoiceSettings
+        });
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+
 

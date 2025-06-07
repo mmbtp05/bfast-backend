@@ -1,3 +1,5 @@
+import { Prisma, Roles } from "../../../generated/prisma";
+
 export interface AuthLoginBody {
     type: "phone_number" | "email";
     email?: string;
@@ -24,6 +26,6 @@ export interface AddUserBody {
     last_name: string;
     email: string;
     permissions: string[];
-    role: string;
+    role: Roles;
     buyer_detail_access: boolean;
 }
