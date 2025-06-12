@@ -1,4 +1,5 @@
 import { Prisma, Roles } from "../../../generated/prisma";
+import { UserType } from "../../utils/constants";
 
 export interface AuthLoginBody {
     type: "phone_number" | "email";
@@ -19,6 +20,7 @@ export interface AuthRegisterBody {
     parcels_per_month: string;
     otp?: string | null;
     session_uuid?: string | null;
+    user_type: UserType;
 }
 
 export interface AddUserBody {

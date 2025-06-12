@@ -4,6 +4,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import 'dotenv/config';
 import { CustomRequest } from "../types/customRequest";
 import prisma from "../config/db";
+import { UserType } from "../utils/constants";
 
 interface CustomJwtPayload extends JwtPayload {
     user_id: string;
@@ -11,6 +12,7 @@ interface CustomJwtPayload extends JwtPayload {
     permissions: string[];
     token?: string;
     jti?: string;
+    user_type?: UserType;
 }
 
 export const isAuthenticate = async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -27,6 +29,7 @@ export const isAuthenticate = async (req: CustomRequest, res: Response, next: Ne
         req.org_id = decoded.org_id
         req.token = token[1]
         req.jti = decoded.jti
+        req.user_type = decoded.user_type
 
         const isBlacklisted = await prisma.jWTBlacklist.findUnique({
             where: {

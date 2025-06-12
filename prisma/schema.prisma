@@ -37,6 +37,11 @@ enum Roles {
   OTHERS
 }
 
+enum UserType {
+  BUSINESS
+  INDIVIDUAL
+}
+
 model Organization {
   id                             String                  @id() @default(uuid())
   company_name                   String?
@@ -58,8 +63,23 @@ model Organization {
   invoice_signature              String?
   business_category              BusinessCategories?
   business_subcategory           String?
+  business_gstin                 String?
+  individual_pan                 String?
+  individual_aadhar              String?
+  pickup_address                 String?
+  pickup_landmark                String?
+  pickup_pincode                 String?
+  pickup_city                    String?
+  pickup_state                   String?
+  return_address                 String?
+  return_landmark                String?
+  return_pincode                 String?
+  return_city                    String?
+  return_state                   String?
   remittance_info                OrganizationRemittance?
   users                          User[]
+  created_at                     DateTime                @default(now())
+  updated_at                     DateTime                @updatedAt()
 }
 
 model OrganizationRemittance {
@@ -73,12 +93,16 @@ model OrganizationRemittance {
   remittance_period Int              @default(14)
   org_id            String           @unique()
   org               Organization     @relation(fields: [org_id], references: [id])
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt()
 }
 
 model Couriers {
-  id   String  @id() @default(uuid())
-  name String
-  logo String?
+  id         String   @id() @default(uuid())
+  name       String
+  logo       String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt()
 }
 
 model User {
@@ -94,6 +118,7 @@ model User {
   scope               RoleScope
   email_verified      Boolean           @default(false)
   buyer_detail_access Boolean           @default(false)
+  user_type           UserType
   org_id              String
   org                 Organization      @relation(fields: [org_id], references: [id])
   permissions         UserPermissions[]
@@ -103,11 +128,13 @@ model User {
 }
 
 model JWTBlacklist {
-  id      String @id() @default(uuid())
-  token   String
-  jti     String @unique()
-  user_id String
-  user    User   @relation(fields: [user_id], references: [id])
+  id         String   @id() @default(uuid())
+  token      String
+  jti        String   @unique()
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt()
 }
 
 model Permissions {
@@ -115,6 +142,8 @@ model Permissions {
   tag         String
   description String?
   users       UserPermissions[]
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt()
 }
 
 model UserPermissions {
@@ -123,4 +152,8 @@ model UserPermissions {
   user          User        @relation(fields: [user_id], references: [id])
   permission_id String
   permission    Permissions @relation(fields: [permission_id], references: [id])
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt()
+
+  @@unique([user_id, permission_id])
 }

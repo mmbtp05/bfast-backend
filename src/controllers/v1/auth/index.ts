@@ -70,7 +70,8 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
             {
                 permissions: userPermissions,
                 user_id: user?.id,
-                org_id: user?.org_id
+                org_id: user?.org_id,
+                user_type: user?.user_type
             },
             process.env.TOKEN_KEY ?? "",
             {
@@ -88,6 +89,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
                 org_id: user?.org_id,
                 role: user?.role,
                 user_permissions: userPermissions,
+                user_type: user?.user_type,
                 access_token
             }
         })
@@ -98,11 +100,21 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
 
 
 export const register = async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { first_name, last_name, company_name, phone_number, email, password, parcels_per_month, otp, session_uuid } = req.body as AuthRegisterBody;
+    const { first_name, last_name, company_name, user_type, phone_number, email, password, parcels_per_month, otp, session_uuid } = req.body as AuthRegisterBody;
 
     try {
-        if (!first_name || !last_name || !company_name || !phone_number || !email || !password || !parcels_per_month) {
+        if (!first_name || !last_name || !phone_number || !email || !password) {
             throw new AppError("Please mention all information.", ErrorCode.INVALID_PAYLOAD)
+        }
+
+        if (!["BUSINESS", "INDIVIDUAL"].includes(user_type)) {
+            throw new AppError("user_type must be either 'BUSINESS' or 'INDIVIDUAL'", ErrorCode.INVALID_PAYLOAD)
+        }
+
+        if (user_type === "BUSINESS") {
+            if (!company_name || !parcels_per_month) {
+                throw new AppError("Company name and parcels per month are required for business users.", ErrorCode.INVALID_PAYLOAD)
+            }
         }
 
         const checkUser = await prisma.user.findFirst({
@@ -126,7 +138,13 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
             throw new AppError("Invalid Otp", ErrorCode.INVALID_OTP)
         }
 
-        const createOrg = await prisma.organization.create({ data: { company_name, parcels_per_month, company_email: email } })
+        let orgData = {
+            company_name: company_name ?? null,
+            parcels_per_month: parcels_per_month ?? null,
+            company_email: email
+        }
+
+        const createOrg = await prisma.organization.create({ data: orgData })
 
         const hash_pass = await hashPassword(password)
 
@@ -135,6 +153,7 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
                 org_id: createOrg.id,
                 role: "ADMIN",
                 scope: "ORGANIZATION",
+                user_type,
                 password: hash_pass,
                 first_name,
                 last_name,
@@ -165,7 +184,8 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
             {
                 permissions: userPermissions,
                 user_id: createUser?.id,
-                org_id: createOrg?.id
+                org_id: createOrg?.id,
+                user_type: user_type
             },
             process.env.TOKEN_KEY ?? "",
             {
@@ -183,6 +203,7 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
                 org_id: createOrg?.id,
                 role: createUser?.role,
                 user_permissions: userPermissions,
+                user_type: createUser.user_type,
                 access_token
             }
         });
@@ -211,7 +232,7 @@ export const logout = async (req: CustomRequest, res: Response, next: NextFuncti
     }
 }
 
-export const addUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
+export const addOrgUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { first_name, last_name, email, role, permissions, buyer_detail_access } = req.body as AddUserBody
 
     try {
@@ -242,7 +263,8 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
                 org_id: req.org_id ?? "",
                 scope: "ORGANIZATION",
                 buyer_detail_access,
-                is_active: true
+                is_active: true,
+                user_type: "BUSINESS"
             }
         })
 
@@ -252,7 +274,83 @@ export const addUsers = async (req: CustomRequest, res: Response, next: NextFunc
     }
 }
 
-export const getUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
+export const updateOrgUser = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { first_name, last_name, email, role, permissions, buyer_detail_access } = req.body as AddUserBody
+    const { id } = req.params
+
+    try {
+        if (!id) {
+            throw new AppError("User ID is required", ErrorCode.INVALID_PAYLOAD)
+        }
+
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                id: id,
+                org_id: req.org_id
+            }
+        });
+
+        if (!existingUser) {
+            throw new AppError("User not found", ErrorCode.USER_NOT_FOUND)
+        }
+
+
+        if (email && email !== existingUser.email) {
+            const emailExists = await prisma.user.findFirst({
+                where: {
+                    email: email
+                }
+            });
+
+            if (emailExists) {
+                throw new AppError("Email already exists!", ErrorCode.USER_ALREADY_EXISTS)
+            } else {
+                await prisma.user.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        email_verified: false
+                    }
+                })
+            }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Delete existing permissions
+            await tx.userPermissions.deleteMany({
+                where: {
+                    user_id: id
+                }
+            });
+
+            // Update user with new data and create new permissions
+            await tx.user.update({
+                where: {
+                    id: id
+                },
+                data: {
+                    first_name,
+                    last_name,
+                    email,
+                    role,
+                    buyer_detail_access,
+                    permissions: {
+                        createMany: {
+                            data: permissions?.map(per => ({ permission_id: per }))
+                        }
+                    }
+                }
+            });
+        });
+
+        return res.status(200).json({ success: true, success_code: 200, message: 'Org user data updated successfully!' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getOrgUsers = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
         const users = await prisma.$queryRaw`
             SELECT 
@@ -269,7 +367,6 @@ export const getUsers = async (req: CustomRequest, res: Response, next: NextFunc
             LEFT JOIN "Permissions" p ON up.permission_id = p.id
             WHERE u.org_id = ${req.org_id} AND u.role != 'ADMIN'
             GROUP BY u.id
-
         `
 
         return res.status(200).json({

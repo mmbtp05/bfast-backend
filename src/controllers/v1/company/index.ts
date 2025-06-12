@@ -203,6 +203,3 @@ export const updateInvoiceSettings = async (req: CustomRequest, res: Response, n
         next(error);
     }
 }
-
-
-
