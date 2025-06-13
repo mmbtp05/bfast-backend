@@ -266,7 +266,7 @@ export const addOrgUsers = async (req: CustomRequest, res: Response, next: NextF
                 is_active: true,
                 user_type: "BUSINESS"
             }
-        })
+        }) 
 
         return res.status(200).json({ success: true, success_code: 200, message: 'User added successfully!' })
     } catch (error) {

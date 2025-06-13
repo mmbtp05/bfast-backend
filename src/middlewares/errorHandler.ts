@@ -5,9 +5,10 @@ import { Prisma } from '../../generated/prisma';
 import logger from '../utils/logger';
 import { CustomRequest } from '../types/customRequest';
 import { ErrorResponse } from '../types/error';
+import { JsonWebTokenError } from 'jsonwebtoken';
 
 export const errorHandler = (
-    error: AppError | Prisma.PrismaClientKnownRequestError,
+    error: AppError | Prisma.PrismaClientKnownRequestError | JsonWebTokenError,
     req: CustomRequest,
     res: Response,
     next: NextFunction
@@ -45,6 +46,23 @@ export const errorHandler = (
             message: errorResponse.message,
             metadata: error.meta
         });
+    }
+
+    //handle Jwt errors
+    else if (error instanceof JsonWebTokenError) {
+        let message = "";
+        if(error.name === "TokenExpiredError"){
+            message = "Token has expired. Please log in again."
+        }else if (error.name === "JsonWebTokenError"){
+            message = "Invalid token. Unauthorized."
+        }
+
+        errorResponse = {
+            success: false,
+            error_code: 40001,
+            status_code: 401,
+            message: message
+        }
     }
 
     // Default error response for unhandled errors

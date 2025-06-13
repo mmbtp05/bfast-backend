@@ -42,13 +42,7 @@ export const isAuthenticate = async (req: CustomRequest, res: Response, next: Ne
         }
 
         next();
-    } catch (error: any) {
-        if (error.name === "TokenExpiredError") {
-            return next(new UnauthorizedError("Token has expired. Please log in again."));
-        } else if (error.name === "JsonWebTokenError") {
-            return next(new UnauthorizedError("Invalid token. Unauthorized."));
-        }
-
+    } catch (error) {
         return next(error);
     }
 }

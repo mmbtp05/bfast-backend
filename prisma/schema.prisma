@@ -64,18 +64,28 @@ model Organization {
   business_category              BusinessCategories?
   business_subcategory           String?
   business_gstin                 String?
+  verification_ref_id            String?
   individual_pan                 String?
   individual_aadhar              String?
+  is_kyc_done                    Boolean                 @default(false)
   pickup_address                 String?
   pickup_landmark                String?
   pickup_pincode                 String?
   pickup_city                    String?
   pickup_state                   String?
+  pickup_lat                     String?
+  pickup_long                    String?
+  pickup_username                String?
+  pickup_user_number             String?
   return_address                 String?
   return_landmark                String?
   return_pincode                 String?
   return_city                    String?
   return_state                   String?
+  return_lat                     String?
+  return_long                    String?
+  return_username                String?
+  return_user_number             String?
   remittance_info                OrganizationRemittance?
   users                          User[]
   created_at                     DateTime                @default(now())

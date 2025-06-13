@@ -55,8 +55,17 @@ export const verifyAadharOtp = async (req: CustomRequest, res: Response, next: N
             }
         })
 
+        await prisma.organization.update({
+            where: {
+                id: req.org_id
+            },
+            data: {
+                is_kyc_done: true
+            }
+        })
+
         return res.status(200).json({ success: true, status_code: 200, data: verifyOtp.data })
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -74,8 +83,17 @@ export const verifyGstin = async (req: CustomRequest, res: Response, next: NextF
             }
         })
 
+        await prisma.organization.update({
+            where: {
+                id: req.org_id
+            },
+            data: {
+                is_kyc_done: true
+            }
+        })
+
         return res.status(200).json({ success: true, status_code: 200, data: verifyGSTIN.data })
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }
@@ -93,8 +111,17 @@ export const verifyPan = async (req: CustomRequest, res: Response, next: NextFun
             }
         })
 
+        await prisma.organization.update({
+            where: {
+                id: req.org_id
+            },
+            data: {
+                is_kyc_done: true
+            }
+        })
+
         return res.status(200).json({ success: true, status_code: 200, data: verifyPan.data })
-    } catch (error: any) {
+    } catch (error) {
         next(error)
     }
 }

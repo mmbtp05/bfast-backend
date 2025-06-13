@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     next();
 });
    
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
     res.send('Hello, World!');
 });
 

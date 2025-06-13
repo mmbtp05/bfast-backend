@@ -87,6 +87,10 @@ model Organization {
   pickup_pincode                 String?
   pickup_city                    String?
   pickup_state                   String?
+  pickup_lat                     String?
+  pickup_long                    String?
+  pickup_username                String?
+  pickup_user_number             String?
 
   //rto address
   return_address                 String?
@@ -94,6 +98,10 @@ model Organization {
   return_pincode                 String?
   return_city                    String?
   return_state                   String?
+  return_lat                     String?
+  return_long                    String?
+  return_username                String?
+  return_user_number             String?
 
   remittance_info                OrganizationRemittance?
   users                          User[]
