@@ -86,89 +86,39 @@ export const updateOrganizationAddress = async (req: CustomRequest, res: Respons
     }
 };
 
-// // Optional: GET API to fetch address information
-// export const getOrganizationAddress = async (req: CustomRequest, res: Response, next: NextFunction) => {
-//     try {
-//         const user_id = req.user?.user_id;
-//         const org_id = req.user?.org_id;
+export const getOrganizationAddress = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const orgAddress = await prisma.organization.findUnique({
+            where: { id: req.org_id },
+            select: {
+                id: true,
+                pickup_address: true,
+                pickup_landmark: true,
+                pickup_pincode: true,
+                pickup_city: true,
+                pickup_state: true,
+                pickup_lat: true,
+                pickup_long: true,
+                pickup_username: true,
+                pickup_user_number: true,
+                return_address: true,
+                return_landmark: true,
+                return_pincode: true,
+                return_city: true,
+                return_state: true,
+                return_lat: true,
+                return_long: true,
+                return_username: true,
+                return_user_number: true
+            }
+        });
 
-//         if (!user_id || !org_id) {
-//             throw new AppError("Unauthorized access.", ErrorCode.UNAUTHORIZED);
-//         }
-
-//         // Verify user belongs to the organization
-//         const user = await prisma.user.findUnique({
-//             where: { id: user_id },
-//             select: { org_id: true, role: true }
-//         });
-
-//         if (!user || user.org_id !== org_id) {
-//             throw new AppError("User not authorized for this organization.", ErrorCode.UNAUTHORIZED);
-//         }
-
-//         const organization = await prisma.organization.findUnique({
-//             where: { id: org_id },
-//             select: {
-//                 id: true,
-//                 // Pickup address fields
-//                 pickup_address: true,
-//                 pickup_landmark: true,
-//                 pickup_pincode: true,
-//                 pickup_city: true,
-//                 pickup_state: true,
-//                 pickup_lat: true,
-//                 pickup_long: true,
-//                 pickup_username: true,
-//                 pickup_user_number: true,
-//                 // Return address fields
-//                 return_address: true,
-//                 return_landmark: true,
-//                 return_pincode: true,
-//                 return_city: true,
-//                 return_state: true,
-//                 return_lat: true,
-//                 return_long: true,
-//                 return_username: true,
-//                 return_user_number: true
-//             }
-//         });
-
-//         if (!organization) {
-//             throw new AppError("Organization not found.", ErrorCode.NOT_FOUND);
-//         }
-
-//         return res.status(200).json({
-//             success: true,
-//             status_code: 200,
-//             message: "Address information retrieved successfully.",
-//             data: {
-//                 org_id: organization.id,
-//                 pickup_address: {
-//                     address: organization.pickup_address,
-//                     landmark: organization.pickup_landmark,
-//                     pincode: organization.pickup_pincode,
-//                     city: organization.pickup_city,
-//                     state: organization.pickup_state,
-//                     latitude: organization.pickup_lat,
-//                     longitude: organization.pickup_long,
-//                     contact_person: organization.pickup_username,
-//                     contact_number: organization.pickup_user_number
-//                 },
-//                 return_address: {
-//                     address: organization.return_address,
-//                     landmark: organization.return_landmark,
-//                     pincode: organization.return_pincode,
-//                     city: organization.return_city,
-//                     state: organization.return_state,
-//                     latitude: organization.return_lat,
-//                     longitude: organization.return_long,
-//                     contact_person: organization.return_username,
-//                     contact_number: organization.return_user_number
-//                 }
-//             }
-//         });
-
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: orgAddress
+        });
+    } catch (error) {
+        next(error);
+    }
+};

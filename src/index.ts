@@ -4,6 +4,8 @@ import 'dotenv/config.js';
 import authRouter from "./routes/v1/auth"
 import companyRouter from "./routes/v1/company"
 import kycRouter from "./routes/v1/kyc"
+import remittenceRouter from "./routes/v1/remittence"
+import addressesRouter from "./routes/v1/addresses"
 import { errorHandler } from './middlewares/errorHandler';
 
 const app = express();
@@ -16,6 +18,8 @@ app.use(cors());
 app.use("/api/v1", authRouter);
 app.use("/api/v1", companyRouter);
 app.use("/api/v1", kycRouter);
+app.use("/api/v1", remittenceRouter);
+app.use("/api/v1", addressesRouter);
 
 
 app.use((req, res, next) => {

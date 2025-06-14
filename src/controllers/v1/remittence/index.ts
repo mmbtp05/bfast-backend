@@ -67,57 +67,29 @@ export const upsertRemmittenceInfo = async (req: CustomRequest, res: Response, n
     }
 };
 
-// Optional: Separate GET API to fetch remittance info
-// export const getRemittanceInfo = async (req: CustomRequest, res: Response, next: NextFunction) => {
-//     try {
-//         const user_id = req.user?.user_id;
-//         const org_id = req.user?.org_id;
+export const getRemittanceInfo = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const remittanceInfo = await prisma.organizationRemittance.findUnique({
+            where: { id: req.org_id },
+            select: {
+                id: true,
+                account_number: true,
+                account_type: true,
+                beneficiary_name: true,
+                ifsc_code: true,
+                bank_name: true,
+                branch_name: true,
+                remittance_period: true,
+                org_id: true
+            }
+        });
 
-//         if (!user_id || !org_id) {
-//             throw new AppError("Unauthorized access.", ErrorCode.UNAUTHORIZED);
-//         }
-
-//         // Verify user belongs to the organization
-//         const user = await prisma.user.findUnique({
-//             where: { id: user_id },
-//             select: { org_id: true, role: true }
-//         });
-
-//         if (!user || user.org_id !== org_id) {
-//             throw new AppError("User not authorized for this organization.", ErrorCode.UNAUTHORIZED);
-//         }
-
-//         const remittanceInfo = await prisma.organizationRemittance.findUnique({
-//             where: { org_id },
-//             select: {
-//                 id: true,
-//                 account_number: true,
-//                 account_type: true,
-//                 beneficiary_name: true,
-//                 ifsc_code: true,
-//                 bank_name: true,
-//                 branch_name: true,
-//                 remittance_period: true,
-//                 org_id: true
-//             }
-//         });
-
-//         if (!remittanceInfo) {
-//             return res.status(404).json({
-//                 success: false,
-//                 status_code: 404,
-//                 message: "Remittance information not found for this organization."
-//             });
-//         }
-
-//         return res.status(200).json({
-//             success: true,
-//             status_code: 200,
-//             message: "Remittance information retrieved successfully.",
-//             data: remittanceInfo
-//         });
-
-//     } catch (error) {
-//         next(error);
-//     }
-// };
+        return res.status(200).json({
+            success: true,
+            status_code: 200,
+            data: remittanceInfo
+        });
+    } catch (error) {
+        next(error);
+    }
+};
