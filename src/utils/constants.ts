@@ -1,5 +1,5 @@
 // Business Categories Constants
-export const BusinessCategories = {
+export const businessCategories = {
     SOLE: "SOLE",
     INDIVIDUAL: "INDIVIDUAL", 
     COMPANY: "COMPANY"
@@ -8,7 +8,7 @@ export const BusinessCategories = {
 export type BusinessCategories = "SOLE" | "INDIVIDUAL" | "COMPANY";
 
 // Bank Account Types Constants
-export const BankAccountTypes = {
+export const bankAccountTypes = {
     SAVING: "SAVING",
     CURRENT: "CURRENT"
 } as const;
@@ -16,7 +16,7 @@ export const BankAccountTypes = {
 export type BankAccountTypes = "SAVING" | "CURRENT";
 
 // Role Scope Constants
-export const RoleScope = {
+export const roleScope = {
     GLOBAL: "GLOBAL",
     ORGANIZATION: "ORGANIZATION"
 } as const;
@@ -24,7 +24,7 @@ export const RoleScope = {
 export type RoleScope = "GLOBAL" | "ORGANIZATION";
 
 // Roles Constants
-export const Roles = {
+export const roles = {
     SUPERADMIN: "SUPERADMIN",
     ADMIN: "ADMIN",
     EXECUTIVE: "EXECUTIVE",
@@ -34,9 +34,26 @@ export const Roles = {
 export type Roles = "SUPERADMIN" | "ADMIN" | "EXECUTIVE" | "OTHERS";
 
 // User Type Constants
-export const UserType = {
+export const userType = {
     BUSINESS: "BUSINESS",
     INDIVIDUAL: "INDIVIDUAL"
 } as const;
 
 export type UserType = "BUSINESS" | "INDIVIDUAL";
+
+// Transport Modes
+export const transportMode = {
+    EXPRESS: "EXPRESS",
+    SURFACE: "SURFACE"
+} as const;
+
+export type TransportMode = "EXPRESS" | "SURFACE";
+
+//Shipment Type
+export const shipmentType = {
+    FORWARD: "FORWARD",
+    RTO: "RTO",
+    REVERSE: "REVERSE"
+} as const;
+
+export type ShipmentType = "FORWARD" | "RTO" | "REVERSE";

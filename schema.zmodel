@@ -107,6 +107,8 @@ model Organization {
   remittance_info                OrganizationRemittance?
   users                          User[]
   courier_priority_list          OrganizationCouriersPriority[]
+  courier_base_rates             CourierBaseCharges[]
+  rate_card                      CourierRateCard[]
 
   created_at                     DateTime                       @default(now())
   updated_at                     DateTime                       @updatedAt
@@ -130,14 +132,16 @@ model OrganizationRemittance {
 }
 
 model Couriers {
-  id           String                         @id @default(uuid())
-  name         String
-  logo         String?
+  id                   String                         @id @default(uuid())
+  name                 String
+  logo                 String?
 
-  orgnizations OrganizationCouriersPriority[]
+  orgnizations         OrganizationCouriersPriority[]
+  courier_base_charges CourierBaseCharges[]
+  rate_card            CourierRateCard[]
 
-  created_at   DateTime                       @default(now())
-  updated_at   DateTime                       @updatedAt
+  created_at           DateTime                       @default(now())
+  updated_at           DateTime                       @updatedAt
 }
 
 model OrganizationCouriersPriority {
@@ -151,7 +155,9 @@ model OrganizationCouriersPriority {
   courier    Couriers     @relation(fields: [courier_id], references: [id], onDelete: Cascade)
 
   created_at DateTime     @default(now())
-  updated_at DateTime     @updatedAt
+  updated_at DateTime     @updatedAt 
+
+  @@unique([org_id, courier_id, priority])
 }
 
 model User {
@@ -222,17 +228,47 @@ model UserPermissions {
 }
 
 model CourierBaseCharges {
-  id String @id @default(uuid())
+  id                String       @id @default(uuid())
 
-  courier_id String
-  
+  courier_id        String
+  courier           Couriers     @relation(fields: [courier_id], references: [id])
+
+  org_id            String
+  org               Organization @relation(fields: [org_id], references: [id])
+
+  dead_weight       Int
+  volumetric_factor Int
+  min_cod_charges   Int?
+  cod_percentage    Float?
+  max_cod_charges   Int?
+  qc_charge         Int?
+  insurance_charge  Int?
+
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @updatedAt
 }
 
 
-model RateCard {
-  id         String   @id @default(uuid())
+model CourierRateCard {
+  id             String       @id @default(uuid())
 
+  courier_id     String
+  courier        Couriers     @relation(fields: [courier_id], references: [id])
 
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  org_id         String
+  org            Organization @relation(fields: [org_id], references: [id])
+
+  zone_code      String
+  transport_mode String     //EXPRESS, SURFACE
+  shipment_type  String     //FORWARD, RTO, REVERSE
+
+  base_rate      Float
+  base_kg        Float
+  add_x          Float
+  add_x_rate     Float
+
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  @@index([courier_id, org_id, zone_code, transport_mode, shipment_type])
 }

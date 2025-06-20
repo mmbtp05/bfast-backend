@@ -14,7 +14,8 @@ export const getCompanyDetails = async (req: CustomRequest, res: Response, next:
                 company_name: true,
                 brand_name: true,
                 company_logo: true,
-                company_email: true
+                company_email: true,
+                company_website: true
             }
         })
 
