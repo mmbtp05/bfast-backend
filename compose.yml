@@ -1,0 +1,63 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./.env
+    # depends_on:
+    #   - redis
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    stdin_open: true
+    tty: true
+    command: sh -c "npx zenstack generate && npx prisma generate && npx prisma migrate deploy && npm start"
+    volumes:
+      - ./src:/app/src
+      - ./prisma/migrations:/app/prisma/migrations
+    develop:
+      watch:
+        - action: rebuild
+          path: schema.zmodel
+        - action: rebuild
+          path: package.json
+    networks:
+      - app-network
+
+  # nginx:
+  #   build: 
+  #     context: ./nginx
+  #     dockerfile: Dockerfile
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - app
+  #   ports:
+  #     - "80:80"
+  #     - "443:443" 
+  #   networks:
+  #     - app-network
+  #   volumes:
+  #     - /etc/nginx/ssl/cosmium.backend.key:/etc/nginx/ssl/cosmium.backend.key:ro
+  #     - /etc/nginx/ssl/cosmium.backend.pem:/etc/nginx/ssl/cosmium.backend.pem:ro
+
+  # redis: 
+  #   image: redis:6.2-alpine
+  #   restart: always
+  #   env_file: ./.env 
+  #   command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--tcp-keepalive", "0"]
+  #   ports:
+  #     - "6379:6379"   
+  #   labels:
+  #     com.datadoghq.ad.logs: '[{"source": "redis", "service": "nginx-for-queue"}]'
+  #   networks:
+  #     - app-network
+  #   volumes:
+  #     - redis_data:/data   
+
+
+networks:
+  app-network:
+    driver: bridge
+
+# volumes: 
+#   redis_data:
