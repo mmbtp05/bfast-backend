@@ -70,7 +70,7 @@ export const upsertRemmittenceInfo = async (req: CustomRequest, res: Response, n
 export const getRemittanceInfo = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
         const remittanceInfo = await prisma.organizationRemittance.findUnique({
-            where: { id: req.org_id },
+            where: { org_id: req.org_id },
             select: {
                 id: true,
                 account_number: true,

@@ -30,7 +30,7 @@ export const getCompanyDetails = async (req: CustomRequest, res: Response, next:
 
 export const updateCompanyDetails = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-        const { company_name, brand_name, company_email } = req.body;
+        const { company_name, brand_name, company_email, company_website } = req.body;
 
         const updatedDetails = await prisma.organization.update({
             where: {
@@ -39,14 +39,16 @@ export const updateCompanyDetails = async (req: CustomRequest, res: Response, ne
             data: {
                 company_name: company_name ?? Prisma.skip,
                 brand_name: brand_name ?? Prisma.skip,
-                company_email: company_email ?? Prisma.skip
+                company_email: company_email ?? Prisma.skip,
+                company_website: company_website ?? Prisma.skip,
             },
             select: {
                 id: true,
                 company_name: true,
                 brand_name: true,
                 company_logo: true,
-                company_email: true
+                company_email: true,
+                company_website: true
             }
         });
 

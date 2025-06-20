@@ -21,7 +21,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
 
             user = await prisma.user.findUnique({
                 where: { email },
-                include: { permissions: { include: { permission: { select: { tag: true } } } } }
+                include: { permissions: { include: { permission: { select: { tag: true } } } }, org: { select: { is_kyc_done: true } } }
             });
 
             if (!user) {
@@ -42,7 +42,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
 
             user = await prisma.user.findUnique({
                 where: { phone_number },
-                include: { permissions: { include: { permission: { select: { tag: true } } } } }
+                include: { permissions: { include: { permission: { select: { tag: true } } } }, org: { select: { is_kyc_done: true } } }
             });
 
             if (!user) {
@@ -90,6 +90,7 @@ export const login = async (req: CustomRequest, res: Response, next: NextFunctio
                 role: user?.role,
                 user_permissions: userPermissions,
                 user_type: user?.user_type,
+                is_kyc_done: user?.org?.is_kyc_done,
                 access_token
             }
         })
@@ -204,6 +205,7 @@ export const register = async (req: CustomRequest, res: Response, next: NextFunc
                 role: createUser?.role,
                 user_permissions: userPermissions,
                 user_type: createUser.user_type,
+                is_kyc_done: createOrg.is_kyc_done,
                 access_token
             }
         });
@@ -266,7 +268,7 @@ export const addOrgUsers = async (req: CustomRequest, res: Response, next: NextF
                 is_active: true,
                 user_type: "BUSINESS"
             }
-        }) 
+        })
 
         return res.status(200).json({ success: true, success_code: 200, message: 'User added successfully!' })
     } catch (error) {
@@ -361,7 +363,7 @@ export const getOrgUsers = async (req: CustomRequest, res: Response, next: NextF
             u.email,
             u.buyer_detail_access,
             u.is_active,
-            COALESCE(json_agg(p.tag) FILTER (WHERE p.id IS NOT NULL), '[]') AS permissions
+            COALESCE(json_agg(json_build_object('id', p.id, 'tag', p.tag)) FILTER (WHERE p.id IS NOT NULL), '[]') AS permissions
             FROM "User" u
             LEFT JOIN "UserPermissions" up ON u.id = up.user_id
             LEFT JOIN "Permissions" p ON up.permission_id = p.id
@@ -381,7 +383,7 @@ export const getOrgUsers = async (req: CustomRequest, res: Response, next: NextF
 
 export const getPermissions = async (req: CustomRequest, res: Response, next: NextFunction) => {
     try {
-        const permissions = await prisma.permissions.findMany()
+        const permissions = await prisma.permissions.findMany({ select: { id: true, tag: true } });
         return res.status(200).send({ success: true, success_code: 200, data: permissions })
     } catch (error) {
         next(error)

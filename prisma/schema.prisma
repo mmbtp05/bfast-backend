@@ -43,11 +43,11 @@ enum UserType {
 }
 
 model Organization {
-  id                             String                  @id() @default(uuid())
+  id                             String                         @id() @default(uuid())
   company_name                   String?
   brand_name                     String?
   company_logo                   String?
-  compant_website                String?
+  company_website                String?
   parcels_per_month              String?
   company_email                  String?
   billing_address                String?
@@ -59,7 +59,7 @@ model Organization {
   invoice_prefix                 String?
   invoice_series_starting_from   String?
   invoice_cin_number             String?
-  invoice_hide_buyer_contact     Boolean                 @default(true)
+  invoice_hide_buyer_contact     Boolean                        @default(true)
   invoice_signature              String?
   business_category              BusinessCategories?
   business_subcategory           String?
@@ -67,7 +67,8 @@ model Organization {
   verification_ref_id            String?
   individual_pan                 String?
   individual_aadhar              String?
-  is_kyc_done                    Boolean                 @default(false)
+  is_kyc_done                    Boolean                        @default(false)
+  kyc_detail                     Json?
   pickup_address                 String?
   pickup_landmark                String?
   pickup_pincode                 String?
@@ -88,8 +89,9 @@ model Organization {
   return_user_number             String?
   remittance_info                OrganizationRemittance?
   users                          User[]
-  created_at                     DateTime                @default(now())
-  updated_at                     DateTime                @updatedAt()
+  courier_priority_list          OrganizationCouriersPriority[]
+  created_at                     DateTime                       @default(now())
+  updated_at                     DateTime                       @updatedAt()
 }
 
 model OrganizationRemittance {
@@ -108,11 +110,23 @@ model OrganizationRemittance {
 }
 
 model Couriers {
-  id         String   @id() @default(uuid())
-  name       String
-  logo       String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt()
+  id           String                         @id() @default(uuid())
+  name         String
+  logo         String?
+  orgnizations OrganizationCouriersPriority[]
+  created_at   DateTime                       @default(now())
+  updated_at   DateTime                       @updatedAt()
+}
+
+model OrganizationCouriersPriority {
+  id         String       @id() @default(uuid())
+  priority   Int
+  org_id     String
+  org        Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  courier_id String
+  courier    Couriers     @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt()
 }
 
 model User {
@@ -166,4 +180,15 @@ model UserPermissions {
   updated_at    DateTime    @updatedAt()
 
   @@unique([user_id, permission_id])
+}
+
+model CourierBaseCharges {
+  id         String @id() @default(uuid())
+  courier_id String
+}
+
+model RateCard {
+  id         String   @id() @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt()
 }
