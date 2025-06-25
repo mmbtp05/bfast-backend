@@ -24,21 +24,21 @@ services:
     networks:
       - app-network
 
-  # nginx:
-  #   build: 
-  #     context: ./nginx
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - app
-  #   ports:
-  #     - "80:80"
-  #     - "443:443" 
-  #   networks:
-  #     - app-network
-  #   volumes:
-  #     - /etc/nginx/ssl/cosmium.backend.key:/etc/nginx/ssl/cosmium.backend.key:ro
-  #     - /etc/nginx/ssl/cosmium.backend.pem:/etc/nginx/ssl/cosmium.backend.pem:ro
+  nginx:
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped 
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443" 
+    networks:
+      - app-network
+    volumes:
+      - /etc/nginx/ssl/bfast.backend.key:/etc/nginx/ssl/bfast.backend.key:ro
+      - /etc/nginx/ssl/bfast.backend.pem:/etc/nginx/ssl/bfast.backend.pem:ro
 
   # redis: 
   #   image: redis:6.2-alpine
