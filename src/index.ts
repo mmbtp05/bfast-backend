@@ -33,6 +33,6 @@ app.get('/', async (req, res) => {
 
 app.use(errorHandler)
 
-app.listen(PORT as number, '0.0.0.0', () => {
-    console.log(`Server is running on port ${PORT} (bound to 0.0.0.0)`);
+app.listen(PORT as number, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
