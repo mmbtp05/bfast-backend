@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(isAuthenticate as RequestHandler);
 router.get('/kyc/business-info', getBusinessInfo as RequestHandler);
 
-router.use(isKycDone as RequestHandler);
+router.use('/kyc', isKycDone as RequestHandler);
 router.patch('/kyc/business-info', patchBusinessInfo as RequestHandler);
 router.post('/kyc/aadhar/otp', sentAadharOtp as RequestHandler);
 router.post('/kyc/aadhar/verify', verifyAadharOtp as RequestHandler);
