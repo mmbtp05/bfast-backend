@@ -73,11 +73,12 @@ model Organization {
   business_category              BusinessCategories?
   business_subcategory           String?
   business_gstin                 String?
-  verification_ref_id            String?
 
   //kyc individual
   individual_pan                 String?
   individual_aadhar              String?
+
+  verification_ref_id            String?
 
   is_kyc_done                    Boolean                        @default(false)
   kyc_detail                     Json?
@@ -92,6 +93,8 @@ model Organization {
   pickup_long                    String?
   pickup_username                String?
   pickup_user_number             String?
+
+  is_pickup_rto_same             Boolean                        @default(true)
 
   //rto address
   return_address                 String?
@@ -129,35 +132,6 @@ model OrganizationRemittance {
 
   created_at        DateTime         @default(now())
   updated_at        DateTime         @updatedAt
-}
-
-model Couriers {
-  id                   String                         @id @default(uuid())
-  name                 String
-  logo                 String?
-
-  orgnizations         OrganizationCouriersPriority[]
-  courier_base_charges CourierBaseCharges[]
-  rate_card            CourierRateCard[]
-
-  created_at           DateTime                       @default(now())
-  updated_at           DateTime                       @updatedAt
-}
-
-model OrganizationCouriersPriority {
-  id         String       @id @default(uuid())
-  priority   Int
-
-  org_id     String
-  org        Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
-
-  courier_id String
-  courier    Couriers     @relation(fields: [courier_id], references: [id], onDelete: Cascade)
-
-  created_at DateTime     @default(now())
-  updated_at DateTime     @updatedAt 
-
-  @@unique([org_id, courier_id, priority])
 }
 
 model User {
@@ -225,6 +199,35 @@ model UserPermissions {
   updated_at    DateTime    @updatedAt
 
   @@unique([user_id, permission_id])
+}
+
+model Couriers {
+  id                   String                         @id @default(uuid())
+  name                 String
+  logo                 String?
+
+  orgnizations         OrganizationCouriersPriority[]
+  courier_base_charges CourierBaseCharges[]
+  rate_card            CourierRateCard[]
+
+  created_at           DateTime                       @default(now())
+  updated_at           DateTime                       @updatedAt
+}
+
+model OrganizationCouriersPriority {
+  id         String       @id @default(uuid())
+  priority   Int
+
+  org_id     String
+  org        Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+
+  courier_id String
+  courier    Couriers     @relation(fields: [courier_id], references: [id], onDelete: Cascade)
+
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  @@unique([org_id, courier_id, priority])
 }
 
 model CourierBaseCharges {

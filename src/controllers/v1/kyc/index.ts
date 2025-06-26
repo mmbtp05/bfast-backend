@@ -2,6 +2,8 @@ import axios from "axios";
 import prisma from "../../../config/db";
 import { CustomRequest } from "../../../types/customRequest";
 import { NextFunction, Response } from "express";
+import { AppError } from "../../../utils/customErrors";
+import { ErrorCode } from "../../../types/error";
 
 export const patchBusinessInfo = async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { business_category, business_subcategory } = req.body
@@ -18,6 +20,24 @@ export const patchBusinessInfo = async (req: CustomRequest, res: Response, next:
         })
 
         return res.status(200).json({ success: true, status_code: 200, message: 'Business info inserted succesfull.' })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const getBusinessInfo = async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+        const businessInfo = await prisma.organization.findUnique({
+            where: {
+                id: req.org_id
+            },
+            select: {
+                business_category: true,
+                business_subcategory: true
+            }
+        })
+
+        return res.status(200).json({ success: true, status_code: 200, data: businessInfo })
     } catch (error) {
         next(error)
     }
@@ -60,7 +80,9 @@ export const verifyAadharOtp = async (req: CustomRequest, res: Response, next: N
                 id: req.org_id
             },
             data: {
-                is_kyc_done: true
+                is_kyc_done: true,
+                verification_ref_id: verifyOtp.data?.ref_id,
+                kyc_detail: verifyOtp.data
             }
         })
 
@@ -74,7 +96,7 @@ export const verifyGstin = async (req: CustomRequest, res: Response, next: NextF
     const { gstin } = req.body
 
     try {
-        const verifyGSTIN = await axios.post('https://sandbox.cashfree.com/verification/gstin', {
+        const verifyGstin = await axios.post('https://sandbox.cashfree.com/verification/gstin', {
             GSTIN: gstin
         }, {
             headers: {
@@ -88,11 +110,13 @@ export const verifyGstin = async (req: CustomRequest, res: Response, next: NextF
                 id: req.org_id
             },
             data: {
-                is_kyc_done: true
+                is_kyc_done: true,
+                verification_ref_id: verifyGstin.data?.reference_id,
+                kyc_detail: verifyGstin.data
             }
         })
 
-        return res.status(200).json({ success: true, status_code: 200, data: verifyGSTIN.data })
+        return res.status(200).json({ success: true, status_code: 200, data: verifyGstin.data })
     } catch (error) {
         next(error)
     }
@@ -111,12 +135,18 @@ export const verifyPan = async (req: CustomRequest, res: Response, next: NextFun
             }
         })
 
+        if( verifyPan.data?.name_match_result == 'POOR_PARTIAL_MATCH' || verifyPan.data?.name_match_result == 'NO_MATCH' ) {
+            throw new AppError("PAN name does not match with the provided name.", ErrorCode.EXTERNAL_API_ERROR)
+        }
+
         await prisma.organization.update({
             where: {
                 id: req.org_id
             },
             data: {
-                is_kyc_done: true
+                is_kyc_done: true,
+                verification_ref_id: verifyPan.data?.reference_id,
+                kyc_detail: verifyPan.data
             }
         })
 

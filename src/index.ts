@@ -17,9 +17,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1", authRouter);
 app.use("/api/v1", companyRouter);
-app.use("/api/v1", kycRouter);
 app.use("/api/v1", remittenceRouter);
 app.use("/api/v1", addressesRouter);
+app.use("/api/v1", kycRouter);
 
 
 app.use((req, res, next) => {

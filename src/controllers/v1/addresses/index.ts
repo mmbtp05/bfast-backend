@@ -27,7 +27,9 @@ export const updateOrganizationAddress = async (req: CustomRequest, res: Respons
         return_lat,
         return_long,
         return_username,
-        return_user_number
+        return_user_number,
+
+        is_pickup_rto_same
     } = req.body;
 
     try {
@@ -51,10 +53,10 @@ export const updateOrganizationAddress = async (req: CustomRequest, res: Respons
                 return_lat: return_lat ?? Prisma.skip,
                 return_long: return_long ?? Prisma.skip,
                 return_username: return_username ?? Prisma.skip,
-                return_user_number: return_user_number ?? Prisma.skip
+                return_user_number: return_user_number ?? Prisma.skip,
+                is_pickup_rto_same: is_pickup_rto_same ?? Prisma.skip
             },
             select: {
-                id: true,
                 pickup_address: true,
                 pickup_landmark: true,
                 pickup_pincode: true,
@@ -72,7 +74,8 @@ export const updateOrganizationAddress = async (req: CustomRequest, res: Respons
                 return_lat: true,
                 return_long: true,
                 return_username: true,
-                return_user_number: true
+                return_user_number: true,
+                is_pickup_rto_same: true
             }
         });
 
@@ -91,7 +94,6 @@ export const getOrganizationAddress = async (req: CustomRequest, res: Response, 
         const orgAddress = await prisma.organization.findUnique({
             where: { id: req.org_id },
             select: {
-                id: true,
                 pickup_address: true,
                 pickup_landmark: true,
                 pickup_pincode: true,
@@ -109,7 +111,8 @@ export const getOrganizationAddress = async (req: CustomRequest, res: Response, 
                 return_lat: true,
                 return_long: true,
                 return_username: true,
-                return_user_number: true
+                return_user_number: true,
+                is_pickup_rto_same: true
             }
         });
 

@@ -1,10 +1,14 @@
 import express, { RequestHandler } from "express";
-import { patchBusinessInfo, sentAadharOtp, verifyAadharOtp, verifyGstin, verifyPan } from "../../../controllers/v1/kyc";
+import { getBusinessInfo, patchBusinessInfo, sentAadharOtp, verifyAadharOtp, verifyGstin, verifyPan } from "../../../controllers/v1/kyc";
 import { isAuthenticate } from "../../../middlewares/auth";
+import { isKycDone } from "../../../middlewares/isKycDone";
 
 const router = express.Router();
 
-router.use(isAuthenticate);
+router.use(isAuthenticate as RequestHandler);
+router.get('/kyc/business-info', getBusinessInfo as RequestHandler);
+
+router.use(isKycDone as RequestHandler);
 router.patch('/kyc/business-info', patchBusinessInfo as RequestHandler);
 router.post('/kyc/aadhar/otp', sentAadharOtp as RequestHandler);
 router.post('/kyc/aadhar/verify', verifyAadharOtp as RequestHandler);
