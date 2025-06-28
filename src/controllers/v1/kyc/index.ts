@@ -81,7 +81,7 @@ export const verifyAadharOtp = async (req: CustomRequest, res: Response, next: N
             },
             data: {
                 is_kyc_done: true,
-                verification_ref_id: verifyOtp.data?.ref_id,
+                verification_ref_id: verifyOtp.data?.ref_id.toString(),
                 kyc_detail: verifyOtp.data
             }
         })
@@ -111,7 +111,7 @@ export const verifyGstin = async (req: CustomRequest, res: Response, next: NextF
             },
             data: {
                 is_kyc_done: true,
-                verification_ref_id: verifyGstin.data?.reference_id,
+                verification_ref_id: verifyGstin.data?.reference_id.toString(),
                 kyc_detail: verifyGstin.data
             }
         })
@@ -145,7 +145,7 @@ export const verifyPan = async (req: CustomRequest, res: Response, next: NextFun
             },
             data: {
                 is_kyc_done: true,
-                verification_ref_id: verifyPan.data?.reference_id,
+                verification_ref_id: verifyPan.data?.reference_id.toString(),
                 kyc_detail: verifyPan.data
             }
         })
